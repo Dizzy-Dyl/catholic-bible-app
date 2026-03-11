@@ -53,9 +53,10 @@ def bible(book_id, chapter_id):
     try:
         translation = request.args.get("translation", "WEB")
         if translation == "RVR1960":
-            book_names: list = ["genesis","exodus","leviticus","numbers","deuteronomy","joshua","judges","ruth","1-samuel","2-samuel","1-kings","2-kings","1-chronicles","2-chronicles","ezra","nehemiah","esther","job","psalms","proverbs","ecclesiastes","song-of-songs","isaiah","jeremiah","lamentations","ezekiel","daniel","hosea","joel","amos","obadiah","jonah","micah","nahum","habakkuk","zephaniah","haggai","zechariah","malachi","matthew","mark","luke","john)","acts)","romans)","1-corinthians)","2-corinthians)","galatians)","ephesians)","philippians)","colossians)","1-thessalonians)","2-thessalonians)","1-timothy)","2-timothy)","titus)","philemon)","hebrews)","james)","1-peter)","2-peter)","1-john)","2-john)","3-john)","jude)","revelation)"]
+            book_names = ["genesis","exodus","leviticus","numbers","deuteronomy","joshua","judges","ruth","1-samuel","2-samuel","1-kings","2-kings","1-chronicles","2-chronicles","ezra","nehemiah","esther","job","psalms","proverbs","ecclesiastes","song-of-songs","isaiah","jeremiah","lamentations","ezekiel","daniel","hosea","joel","amos","obadiah","jonah","micah","nahum","habakkuk","zephaniah","haggai","zechariah","malachi","matthew","mark","luke","john","acts","romans","1-corinthians","2-corinthians","galatians","ephesians","philippians","colossians","1-thessalonians","2-thessalonians","1-timothy","2-timothy","titus","philemon","hebrews","james","1-peter","2-peter","1-john","2-john","3-john","jude","revelation"]
             book = book_names[book_id - 1]
             url = f"https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/es-rvr1909/books/{book}/chapters/{chapter_id}.json"
+            print("SPANISH URL:", url)
             resp = requests.get(url, timeout=15)
             resp.raise_for_status()
             raw = resp.json()
@@ -69,3 +70,6 @@ def bible(book_id, chapter_id):
     except Exception as e:
         print("BIBLE ERROR:", e)
         return jsonify({"error": "Could not fetch chapter"}), 500
+    except Exception as e:
+        print("BIBLE ERROR:", e)
+        return jsonify({"error": "Could not fetch chapter"}), 500;
