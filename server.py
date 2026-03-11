@@ -52,13 +52,22 @@ def ai():
 def bible(book_id, chapter_id):
     try:
         translation = request.args.get("translation", "WEB")
-        resp = requests.get(
-            f"https://bible-go-api.rkeplin.com/v1/books/{book_id}/chapters/{chapter_id}",
-            params={"translation": translation},
-            timeout=15,
-        )
-        resp.raise_for_status()
-        return jsonify(resp.json())
+        if translation == "RVR1960":
+            # Spanish via wldeh API
+            book_abbrs = ["GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA","1KI","2KI","1CH","2CH","EZR","NEH","EST","JOB","PSA","PRO","ECC","SNG","ISA","JER","LAM","EZK","DAN","HOS","JOL","AMO","OBA","JON","MIC","NAH","HAB","ZEP","HAG","ZEC","MAL","MAT","MRK","LUK","JHN","ACT","ROM","1CO","2CO","GAL","EPH","PHP","COL","1TH","2TH","1TI","2TI","TIT","PHM","HEB","JAS","1PE","2PE","1JN","2JN","3JN","JUD","REV"]
+            abbr = book_abbrs[book_id - 1].lower()
+            url = f"https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/es-rvr1909/books/{abbr}/chapters/{chapter_id}.json"
+            resp = requests.get(url, timeout=15)
+            resp.raise_for_status()
+            raw = resp.json()
+            # normalize to same format as rkeplin
+            verses = [{"verseId": v.get("verse"), "verse": v.get("text","")} for v in raw]
+            return jsonify(verses)
+        else:
+            url = f"https://bible-go-api.rkeplin.com/v1/books/{book_id}/chapters/{chapter_id}"
+            resp = requests.get(url, params={"translation": translation}, timeout=15)
+            resp.raise_for_status()
+            return jsonify(resp.json())
     except Exception as e:
         print("BIBLE ERROR:", e)
         return jsonify({"error": "Could not fetch chapter"}), 500
