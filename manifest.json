@@ -2,7 +2,7 @@
   "name": "FaithAI",
   "short_name": "FaithAI",
   "description": "Catholic Scripture companion",
-  "start_url": "https://23palmr.github.io/catholic-bible-app/",
+  "start_url": "https://23palmr.github.io/FaithAI/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
