@@ -6,7 +6,7 @@ import requests
 app = Flask(__name__)
 CORS(app)
 
-GROQ_API_KEY = "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"
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
 
 @app.route("/ai", methods=["POST"])
 def ai():
