@@ -53,14 +53,13 @@ def bible(book_id, chapter_id):
     try:
         translation = request.args.get("translation", "WEB")
         if translation == "RVR1960":
-            book_names = ["genesis","exodus","leviticus","numbers","deuteronomy","joshua","judges","ruth","1-samuel","2-samuel","1-kings","2-kings","1-chronicles","2-chronicles","ezra","nehemiah","esther","job","psalms","proverbs","ecclesiastes","song-of-songs","isaiah","jeremiah","lamentations","ezekiel","daniel","hosea","joel","amos","obadiah","jonah","micah","nahum","habakkuk","zephaniah","haggai","zechariah","malachi","matthew","mark","luke","john","acts","romans","1-corinthians","2-corinthians","galatians","ephesians","philippians","colossians","1-thessalonians","2-thessalonians","1-timothy","2-timothy","titus","philemon","hebrews","james","1-peter","2-peter","1-john","2-john","3-john","jude","revelation"]
+            book_names = ["Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth","1+Samuel","2+Samuel","1+Kings","2+Kings","1+Chronicles","2+Chronicles","Ezra","Nehemiah","Esther","Job","Psalms","Proverbs","Ecclesiastes","Song+of+Solomon","Isaiah","Jeremiah","Lamentations","Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah","Haggai","Zechariah","Malachi","Matthew","Mark","Luke","John","Acts","Romans","1+Corinthians","2+Corinthians","Galatians","Ephesians","Philippians","Colossians","1+Thessalonians","2+Thessalonians","1+Timothy","2+Timothy","Titus","Philemon","Hebrews","James","1+Peter","2+Peter","1+John","2+John","3+John","Jude","Revelation"]
             book = book_names[book_id - 1]
-            url = f"https://raw.githubusercontent.com/wldeh/bible-api/main/bibles/es-rvr1909/books/{book}/chapters/{chapter_id}.json"
-            print("SPANISH URL:", url)
+            url = f"https://bible-api.com/{book}+{chapter_id}?translation=spa"
             resp = requests.get(url, timeout=15)
             resp.raise_for_status()
-            raw = resp.json()
-            verses = [{"verseId": v.get("verse"), "verse": v.get("text", "")} for v in raw]
+            data = resp.json()
+            verses = [{"verseId": v.get("verse"), "verse": v.get("text", "")} for v in data.get("verses", [])]
             return jsonify(verses)
         else:
             url = f"https://bible-go-api.rkeplin.com/v1/books/{book_id}/chapters/{chapter_id}"
