@@ -217,7 +217,7 @@
     <div class="chat-feed" id="chat-feed">
       <div class="brow ai">
         <div class="ai-meta"><div class="ai-dot">f</div><span class="ai-tag">FaithAI</span></div>
-        <div class="bubble ai" id="welcome-bubble">Ask me anything about Scripture or the Catholic faith.</div>
+        <div class="bubble ai" id="welcome-bubble">Hello! I'm FaithAI, your Catholic Scripture companion. Ask me anything about Scripture or the Catholic faith.</div>
       </div>
     </div>
 
@@ -415,10 +415,10 @@ async function signOut() {
   user = null;
   HL = {}; SK = {d:[]};
   closeProfileDirect();
-  show('auth');
   document.getElementById('home').classList.add('off-r');
+  document.getElementById('bible').classList.add('off-r');
+  document.getElementById('auth').classList.remove('off-r','off-l');
 }
-
 // ── USER DATA (SUPABASE) ───────────────────────────────────────────────────────
 async function loadUserData() {
   if (!user) return;
