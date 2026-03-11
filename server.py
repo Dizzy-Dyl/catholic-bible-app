@@ -1,3 +1,4 @@
+from email.policy import default
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -50,9 +51,10 @@ def ai():
 @app.route("/bible/<int:book_id>/<int:chapter_id>", methods=["GET"])
 def bible(book_id, chapter_id):
     try:
+        translation = request.args.get("translation", "WEB")
         resp = requests.get(
             f"https://bible-go-api.rkeplin.com/v1/books/{book_id}/chapters/{chapter_id}",
-            params={"translation": "WEB"},
+            params={"translation": translation},
             timeout=15,
         )
         resp.raise_for_status()
@@ -60,6 +62,3 @@ def bible(book_id, chapter_id):
     except Exception as e:
         print("BIBLE ERROR:", e)
         return jsonify({"error": "Could not fetch chapter"}), 500
-    
-if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8000, debug=True)

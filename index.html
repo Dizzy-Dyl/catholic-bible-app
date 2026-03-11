@@ -1,934 +1,763 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>FaithAI Bible</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="FaithAI" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <link rel="icon" type="image/png" href="favicon.png.png" />
-  <link rel="apple-touch-icon" href="favicon.png.png" />
+  <meta charset="UTF-8"/>
+  <title>FaithAI</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FaithAI"/>
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="apple-touch-icon" href="favicon.png"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root {
-      --bg: #ffffff;
-      --surface: #f7f7f5;
-      --border: #e8e8e4;
-      --text: #111111;
-      --text-muted: #888888;
-      --accent: #111111;
-      --highlight-yellow: rgba(255, 236, 153, 0.6);
-      --highlight-pink: rgba(255, 182, 193, 0.6);
-      --highlight-blue: rgba(173, 216, 255, 0.6);
-      --highlight-green: rgba(180, 235, 180, 0.6);
-      --highlight-purple: rgba(216, 191, 255, 0.6);
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --bg:#000; --s1:#1c1c1e; --s2:#2c2c2e; --s3:#3a3a3c;
+      --border:rgba(255,255,255,0.1); --text:#fff;
+      --t2:rgba(255,255,255,0.55); --t3:rgba(255,255,255,0.3);
+      --hl-y:rgba(255,214,10,0.25); --hl-p:rgba(255,55,95,0.22);
+      --hl-b:rgba(10,132,255,0.25); --hl-g:rgba(48,209,88,0.22);
+      --hl-v:rgba(191,90,242,0.25);
+      --safe-top:env(safe-area-inset-top,44px);
+      --safe-bot:env(safe-area-inset-bottom,20px);
     }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,'Helvetica Neue',sans-serif;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+    #app{position:relative;height:100dvh;overflow:hidden}
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    /* SCREENS */
+    .scr{position:absolute;inset:0;display:flex;flex-direction:column;height:100dvh;transition:transform .38s cubic-bezier(.32,.72,0,1),opacity .3s ease;background:var(--bg)}
+    .scr.off-r{transform:translateX(100%);pointer-events:none}
+    .scr.off-l{transform:translateX(-28%);opacity:.5;pointer-events:none}
+    .scr.hidden{display:none}
 
-    html, body {
-      height: 100%;
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      overscroll-behavior: none;
-    }
+    /* AUTH SCREEN */
+    #auth{align-items:center;justify-content:center;gap:0;padding:2rem 1.5rem calc(var(--safe-bot) + 2rem)}
+    .auth-logo{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:600;font-style:italic;margin-bottom:.5rem;letter-spacing:.01em}
+    .auth-sub{font-size:.85rem;color:var(--t2);margin-bottom:3rem;text-align:center;line-height:1.5}
+    .auth-card{width:100%;max-width:360px;background:var(--s1);border-radius:24px;padding:1.5rem;border:1px solid var(--border);display:flex;flex-direction:column;gap:.85rem}
+    .auth-title{font-size:.7rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--t3);text-align:center;margin-bottom:.25rem}
+    .auth-input{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:.75rem 1rem;font:inherit;font-size:.92rem;color:var(--text);width:100%;transition:border .15s}
+    .auth-input:focus{outline:none;border-color:rgba(255,255,255,0.4)}
+    .auth-input::placeholder{color:var(--t3)}
+    .auth-btn{padding:.8rem;border-radius:12px;border:none;font:inherit;font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s;width:100%}
+    .auth-btn:active{transform:scale(.98)}
+    .auth-btn.primary{background:#fff;color:#000}
+    .auth-btn.secondary{background:var(--s2);color:var(--text)}
+    .auth-btn.google{background:var(--s2);color:var(--text);display:flex;align-items:center;justify-content:center;gap:.6rem}
+    .auth-btn:disabled{opacity:.4;cursor:default}
+    .auth-divider{display:flex;align-items:center;gap:.75rem}
+    .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+    .auth-divider span{font-size:.72rem;color:var(--t3);white-space:nowrap}
+    .auth-toggle{text-align:center;font-size:.8rem;color:var(--t2)}
+    .auth-toggle button{background:none;border:none;color:var(--text);font:inherit;font-size:.8rem;cursor:pointer;text-decoration:underline}
+    .auth-err{font-size:.78rem;color:#FF375F;text-align:center;min-height:1.1rem}
+    .google-icon{width:18px;height:18px;flex-shrink:0}
 
-    #app { display: flex; flex-direction: column; height: 100%; height: 100dvh; }
+    /* HOME */
+    /* #home selector not needed */
+    .home-top{padding:calc(var(--safe-top) + .25rem) 1.2rem .75rem;display:flex;align-items:center;justify-content:space-between}
+    .logo{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;font-style:italic}
+    .home-right{display:flex;align-items:center;gap:.55rem}
+    .streak-chip{display:flex;align-items:center;gap:.3rem;background:var(--s1);border-radius:999px;padding:.28rem .7rem;font-size:.72rem;color:var(--t2);cursor:pointer;font-weight:500;border:1px solid var(--border)}
+    .lang-chip{display:flex;align-items:center;background:var(--s1);border-radius:999px;border:1px solid var(--border);overflow:hidden;font-size:.7rem;font-weight:600}
+    .lang-opt{padding:.28rem .6rem;cursor:pointer;color:var(--t3);transition:background .15s,color .15s}
+    .lang-opt.active{background:var(--s2);color:var(--text)}
+    .avatar-btn{width:30px;height:30px;border-radius:50%;background:var(--s2);border:none;color:var(--text);font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:600;overflow:hidden}
+    .avatar-btn img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 
-    /* HEADER */
-    .header {
-      padding: calc(var(--safe-top) + 0.75rem) 1.25rem 0.75rem;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      z-index: 10;
-      position: sticky;
-      top: 0;
-    }
+    .bible-card{margin:0 1.2rem .85rem;background:var(--s1);border-radius:18px;padding:.9rem 1.1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;border:1px solid var(--border);transition:background .15s}
+    .bible-card:active{background:var(--s2)}
+    .bc-left{display:flex;flex-direction:column;gap:.15rem}
+    .bc-tag{font-size:.63rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--t3)}
+    .bc-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic}
+    .bc-arrow{color:var(--t3);font-size:1.1rem}
 
-    .header-left { display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0; }
+    /* CHAT */
+    .chat-feed{flex:1;overflow-y:auto;padding:.25rem 1.1rem calc(var(--safe-bot) + 5.5rem);display:flex;flex-direction:column;gap:1rem;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .chat-feed::-webkit-scrollbar{display:none}
+    .brow{display:flex;flex-direction:column;gap:.2rem;animation:fadeUp .2s ease}
+    .brow.me{align-items:flex-end}
+    .brow.ai{align-items:flex-start}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .ai-meta{display:flex;align-items:center;gap:.45rem;margin-bottom:.05rem}
+    .ai-dot{width:26px;height:26px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:.72rem;font-style:italic;font-weight:600;color:var(--t2)}
+    .ai-tag{font-size:.7rem;color:var(--t3);font-weight:500}
+    .bubble{padding:.65rem .95rem;border-radius:18px;font-size:.92rem;line-height:1.5;max-width:82%;word-break:break-word}
+    .bubble.me{background:var(--s2);border-bottom-right-radius:5px}
+    .bubble.ai{background:var(--s1);border-bottom-left-radius:5px}
+    .bubble.thinking{color:var(--t3);font-style:italic}
+    .bbtn-row{display:flex;gap:.85rem;padding:.1rem .2rem}
+    .bbtn{background:none;border:none;color:var(--t3);font-size:.72rem;cursor:pointer;padding:.15rem}
+    .bbtn:active{color:var(--t2)}
 
-    .logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.3rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-    }
+    .ibar{position:absolute;bottom:0;left:0;right:0;padding:.65rem 1.1rem calc(var(--safe-bot) + .65rem);background:linear-gradient(to top,#000 55%,transparent);display:flex;gap:.6rem;align-items:flex-end}
+    .iwrap{flex:1;background:var(--s1);border-radius:22px;border:1px solid var(--border);display:flex;align-items:flex-end;padding:.55rem .85rem;gap:.5rem}
+    .ita{flex:1;background:none;border:none;color:var(--text);font:inherit;font-size:.92rem;resize:none;max-height:110px;line-height:1.4;outline:none}
+    .ita::placeholder{color:var(--t3)}
+    .sbtn{width:28px;height:28px;border-radius:50%;background:var(--text);border:none;color:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:.8rem;transition:opacity .15s,transform .1s}
+    .sbtn:disabled{opacity:.25;cursor:default}
+    .sbtn:active:not(:disabled){transform:scale(.9)}
 
-    .streak-badge {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 0.25rem 0.65rem;
-      font-size: 0.72rem;
-      font-weight: 500;
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-    }
+    /* BIBLE */
+    .btop{padding:calc(var(--safe-top) + .1rem) 1rem .5rem;display:flex;align-items:center;gap:.6rem;border-bottom:1px solid var(--border)}
+    .back-btn{display:flex;align-items:center;gap:.1rem;background:none;border:none;color:var(--text);font-size:.95rem;cursor:pointer;padding:.4rem .5rem;border-radius:10px;transition:background .15s;flex-shrink:0}
+    .back-btn:active{background:var(--s1)}
+    .bsels{display:flex;gap:.35rem;flex:1;min-width:0;overflow:hidden}
+    .bsel{appearance:none;background:var(--s1);border:none;border-radius:10px;padding:.4rem 1.4rem .4rem .6rem;font:inherit;font-size:.76rem;font-weight:500;color:var(--text);cursor:pointer;flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.35)' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .4rem center}
+    .bsel:focus{outline:none}
+    .chnav{display:flex;align-items:center;padding:.35rem 1rem;gap:.5rem;border-bottom:1px solid var(--border)}
+    .chbtn{background:var(--s1);border:none;border-radius:8px;color:var(--text);padding:.3rem .65rem;font:inherit;font-size:.72rem;cursor:pointer;flex-shrink:0;transition:background .1s}
+    .chbtn:disabled{opacity:.2;cursor:default}
+    .chbtn:active:not(:disabled){background:var(--s2)}
+    .chlbl{flex:1;text-align:center;font-size:.78rem;color:var(--t2);font-weight:500}
+    .bscroll{flex:1;overflow-y:auto;padding:1.4rem 1.2rem calc(var(--safe-bot) + 5rem);-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .bscroll::-webkit-scrollbar{display:none}
+    .chtitle{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;font-style:italic;margin-bottom:1.4rem;line-height:1.2}
+    .btext{font-family:'Cormorant Garamond',serif;font-size:1.12rem;line-height:1.9}
+    .verse{display:inline;cursor:pointer;border-radius:3px;transition:background .1s}
+    .verse.sel{background:rgba(255,255,255,.1)}
+    .verse[data-hl=yellow]{background:var(--hl-y)}
+    .verse[data-hl=pink]{background:var(--hl-p)}
+    .verse[data-hl=blue]{background:var(--hl-b)}
+    .verse[data-hl=green]{background:var(--hl-g)}
+    .verse[data-hl=purple]{background:var(--hl-v)}
+    .vnum{font-size:.58rem;vertical-align:super;color:var(--t3);margin-right:.12rem;user-select:none;font-family:-apple-system,sans-serif}
+    .load-msg{color:var(--t3);font-size:.88rem;padding:3rem 0;text-align:center}
 
-    .streak-fire { font-size: 0.85rem; }
+    /* HIGHLIGHT BAR */
+    .hlbar{display:none;position:fixed;bottom:calc(var(--safe-bot) + 1.25rem);left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid var(--border);border-radius:999px;padding:.45rem .7rem;gap:.45rem;align-items:center;z-index:100;box-shadow:0 8px 40px rgba(0,0,0,.6);animation:popIn .15s ease}
+    .hlbar.on{display:flex}
+    @keyframes popIn{from{opacity:0;transform:translateX(-50%) scale(.88)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+    .hldot{width:27px;height:27px;border-radius:50%;cursor:pointer;border:2px solid rgba(255,255,255,.12);transition:transform .1s}
+    .hldot:active{transform:scale(1.15)}
+    .hldot[data-c=yellow]{background:#FFD60A}
+    .hldot[data-c=pink]{background:#FF375F}
+    .hldot[data-c=blue]{background:#0A84FF}
+    .hldot[data-c=green]{background:#30D158}
+    .hldot[data-c=purple]{background:#BF5AF2}
+    .hlrm{width:27px;height:27px;border-radius:50%;border:2px solid rgba(255,255,255,.12);background:transparent;color:var(--t2);font-size:.68rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
-    /* NAV SELECTORS */
-    .nav-bar {
-      padding: 0.75rem 1.25rem;
-      display: flex;
-      gap: 0.5rem;
-      overflow-x: auto;
-      scrollbar-width: none;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg);
-    }
-
-    .nav-bar::-webkit-scrollbar { display: none; }
-
-    select {
-      appearance: none;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.5rem 2rem 0.5rem 0.75rem;
-      font: inherit;
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: var(--text);
-      cursor: pointer;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 0.6rem center;
-      min-width: 0;
-      flex-shrink: 0;
-    }
-
-    select:focus { outline: none; border-color: var(--text); }
-
-    /* HIGHLIGHT TOOLBAR */
-    .highlight-toolbar {
-      display: none;
-      position: fixed;
-      bottom: calc(var(--safe-bottom) + 5rem);
-      left: 50%;
-      transform: translateX(-50%);
-      background: #111;
-      border-radius: 999px;
-      padding: 0.4rem 0.6rem;
-      gap: 0.35rem;
-      align-items: center;
-      z-index: 100;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-      animation: popUp 0.15s ease;
-    }
-
-    .highlight-toolbar.visible { display: flex; }
-
-    @keyframes popUp {
-      from { transform: translateX(-50%) scale(0.9); opacity: 0; }
-      to { transform: translateX(-50%) scale(1); opacity: 1; }
-    }
-
-    .color-dot {
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.3);
-      cursor: pointer;
-      transition: transform 0.1s;
-    }
-
-    .color-dot:hover { transform: scale(1.15); }
-    .color-dot[data-color="yellow"] { background: #FFEC99; }
-    .color-dot[data-color="pink"] { background: #FFB6C1; }
-    .color-dot[data-color="blue"] { background: #ADD8FF; }
-    .color-dot[data-color="green"] { background: #B4EBB4; }
-    .color-dot[data-color="purple"] { background: #D8BFFF; }
-
-    .toolbar-remove {
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.3);
-      background: transparent;
-      color: white;
-      font-size: 0.75rem;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-
-    /* BIBLE CONTENT */
-    .bible-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1.5rem 1.25rem calc(var(--safe-bottom) + 6rem);
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .chapter-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.6rem;
-      font-weight: 500;
-      margin-bottom: 1.5rem;
-      color: var(--text);
-      font-style: italic;
-    }
-
-    .verse {
-      display: inline;
-      cursor: pointer;
-      border-radius: 3px;
-      transition: background 0.1s;
-      line-height: 1.85;
-    }
-
-    .verse-num {
-      font-size: 0.65rem;
-      font-weight: 600;
-      vertical-align: super;
-      color: var(--text-muted);
-      margin-right: 0.2rem;
-      user-select: none;
-    }
-
-    .verse.selected { background: rgba(17,17,17,0.08); border-radius: 3px; }
-    .verse[data-highlight="yellow"] { background: var(--highlight-yellow); }
-    .verse[data-highlight="pink"] { background: var(--highlight-pink); }
-    .verse[data-highlight="blue"] { background: var(--highlight-blue); }
-    .verse[data-highlight="green"] { background: var(--highlight-green); }
-    .verse[data-highlight="purple"] { background: var(--highlight-purple); }
-
-    .bible-text {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.1rem;
-      line-height: 1.85;
-      color: var(--text);
-    }
-
-    .loading-text {
-      text-align: center;
-      color: var(--text-muted);
-      padding: 3rem 1rem;
-      font-size: 0.9rem;
-    }
-
-    /* FAITHAI FLOATING BUTTON */
-    .faithai-fab {
-      position: fixed;
-      bottom: calc(var(--safe-bottom) + 1.25rem);
-      right: 1.25rem;
-      z-index: 200;
-    }
-
-    .fab-btn {
-      width: 52px; height: 52px;
-      border-radius: 50%;
-      background: #111;
-      border: none;
-      color: white;
-      font-size: 1.1rem;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .fab-btn:hover { transform: scale(1.05); box-shadow: 0 6px 28px rgba(0,0,0,0.28); }
-    .fab-btn.open { background: #444; }
-
-    /* FAITHAI PANEL */
-    .faithai-panel {
-      position: fixed;
-      bottom: calc(var(--safe-bottom) + 5rem);
-      right: 1.25rem;
-      width: min(340px, calc(100vw - 2.5rem));
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      box-shadow: 0 12px 48px rgba(0,0,0,0.15);
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: 199;
-      animation: panelIn 0.2s ease;
-    }
-
-    .faithai-panel.open { display: flex; }
-
-    @keyframes panelIn {
-      from { opacity: 0; transform: translateY(12px) scale(0.97); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    .panel-header {
-      padding: 0.9rem 1rem 0.75rem;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .panel-header-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.05rem;
-      font-weight: 600;
-      font-style: italic;
-    }
-
-    .panel-close {
-      background: none;
-      border: none;
-      font-size: 1.1rem;
-      cursor: pointer;
-      color: var(--text-muted);
-      padding: 0.2rem;
-    }
-
-    .panel-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0.9rem 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      max-height: 260px;
-      min-height: 80px;
-    }
-
-    .msg {
-      font-size: 0.85rem;
-      line-height: 1.5;
-      padding: 0.6rem 0.8rem;
-      border-radius: 12px;
-      max-width: 90%;
-    }
-
-    .msg.ai {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      align-self: flex-start;
-      border-bottom-left-radius: 4px;
-    }
-
-    .msg.user {
-      background: #111;
-      color: #fff;
-      align-self: flex-end;
-      border-bottom-right-radius: 4px;
-    }
-
-    .msg.thinking { color: var(--text-muted); font-style: italic; }
-
-    .panel-input-row {
-      display: flex;
-      gap: 0.5rem;
-      padding: 0.75rem 1rem;
-      border-top: 1px solid var(--border);
-    }
-
-    .panel-input {
-      flex: 1;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.55rem 0.75rem;
-      font: inherit;
-      font-size: 0.82rem;
-      background: var(--surface);
-      color: var(--text);
-      resize: none;
-    }
-
-    .panel-input:focus { outline: none; border-color: var(--text); }
-
-    .panel-send {
-      background: #111;
-      border: none;
-      border-radius: 10px;
-      color: white;
-      padding: 0.55rem 0.9rem;
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
-    }
-
-    .panel-send:disabled { opacity: 0.4; cursor: default; }
-
-    /* STREAK MODAL */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 300;
-      align-items: flex-end;
-      justify-content: center;
-    }
-
-    .modal-overlay.open { display: flex; }
-
-    .modal {
-      background: white;
-      border-radius: 24px 24px 0 0;
-      padding: 1.5rem 1.5rem calc(var(--safe-bottom) + 1.5rem);
-      width: 100%;
-      max-width: 480px;
-      animation: slideUp 0.25s ease;
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-
-    .modal-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.4rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-    }
-
-    .streak-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 0.4rem;
-      margin-bottom: 1.25rem;
-    }
-
-    .streak-day {
-      aspect-ratio: 1;
-      border-radius: 8px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.65rem;
-      font-weight: 500;
-      color: var(--text-muted);
-    }
-
-    .streak-day.done { background: #111; color: white; border-color: #111; }
-    .streak-day.today { border-color: #111; border-width: 2px; }
-
-    .modal-close {
-      width: 100%;
-      padding: 0.75rem;
-      background: #111;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font: inherit;
-      font-size: 0.85rem;
-      font-weight: 500;
-      cursor: pointer;
-      margin-top: 0.5rem;
-    }
-
-    /* CHAPTER NAV */
-    .chapter-nav {
-      display: flex;
-      gap: 0.5rem;
-      padding: 0.75rem 1.25rem 0;
-      align-items: center;
-    }
-
-    .chapter-nav-btn {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.4rem 0.75rem;
-      font: inherit;
-      font-size: 0.78rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.1s;
-    }
-
-    .chapter-nav-btn:hover { background: #111; color: white; border-color: #111; }
-    .chapter-nav-btn:disabled { opacity: 0.3; cursor: default; }
-
-    .chapter-label {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      flex: 1;
-      text-align: center;
-    }
-
-    @media (min-width: 600px) {
-      .faithai-panel { width: 340px; }
-    }
+    /* PROFILE SHEET */
+    .sheet-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+    .sheet-bg.on{display:flex}
+    .sheet{background:var(--s1);border-radius:26px 26px 0 0;padding:1.25rem 1.4rem calc(var(--safe-bot) + 1.25rem);width:100%;max-width:480px;animation:sheetUp .3s cubic-bezier(.32,.72,0,1)}
+    @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+    .sheet-handle{width:36px;height:4px;background:var(--s2);border-radius:2px;margin:0 auto 1.1rem}
+    .sheet-title{font-family:'Cormorant Garamond',serif;font-size:1.45rem;font-weight:600;margin-bottom:1.1rem}
+    .profile-row{display:flex;align-items:center;gap:.85rem;margin-bottom:1.25rem}
+    .profile-av{width:52px;height:52px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:600;overflow:hidden;flex-shrink:0}
+    .profile-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+    .profile-info{display:flex;flex-direction:column;gap:.2rem}
+    .profile-name{font-size:1rem;font-weight:600}
+    .profile-email{font-size:.78rem;color:var(--t2)}
+    .sheet-stat-row{display:flex;gap:.75rem;margin-bottom:1.25rem}
+    .sheet-stat{flex:1;background:var(--s2);border-radius:14px;padding:.75rem;text-align:center}
+    .sheet-stat-num{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600}
+    .sheet-stat-lbl{font-size:.65rem;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-top:.1rem}
+    .s-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.35rem;margin-bottom:1rem}
+    .s-day{aspect-ratio:1;border-radius:9px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:500;color:var(--t3)}
+    .s-day.done{background:#fff;color:#000}
+    .s-day.today{outline:2px solid rgba(255,255,255,.35)}
+    .sheet-note{font-size:.78rem;color:var(--t3);margin-bottom:1rem;line-height:1.5}
+    .sheet-close{width:100%;padding:.8rem;background:var(--s2);color:var(--text);border:none;border-radius:13px;font:inherit;font-size:.88rem;font-weight:500;cursor:pointer;margin-bottom:.6rem}
+    .signout-btn{width:100%;padding:.75rem;background:transparent;color:#FF375F;border:1px solid rgba(255,55,95,.3);border-radius:13px;font:inherit;font-size:.88rem;font-weight:500;cursor:pointer}
   </style>
 </head>
 <body>
 <div id="app">
 
-  <header class="header">
-    <div class="header-left">
+  <!-- AUTH -->
+  <div class="scr" id="auth">
+    <div class="auth-logo">FaithAI</div>
+    <p class="auth-sub">Your Catholic Scripture companion.<br>Sign in to sync your highlights and streak.</p>
+    <div class="auth-card">
+      <div class="auth-title" id="auth-title">Sign In</div>
+      <button class="auth-btn google" onclick="signInGoogle()">
+        <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+      <div class="auth-divider"><span>or</span></div>
+      <input class="auth-input" id="a-email" type="email" placeholder="Email"/>
+      <input class="auth-input" id="a-pass" type="password" placeholder="Password"/>
+      <div class="auth-err" id="a-err"></div>
+      <button class="auth-btn primary" id="a-main-btn" onclick="authMain()">Sign In</button>
+      <button class="auth-btn secondary" onclick="authToggle()">Create Account</button>
+      <div class="auth-toggle"><button onclick="skipAuth()">Skip for now</button></div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="scr off-r" id="home">
+    <div class="home-top">
       <span class="logo">FaithAI</span>
-      <span class="streak-badge" id="streak-badge" onclick="openStreakModal()" style="cursor:pointer">
-        <span class="streak-fire">🔥</span>
-        <span id="streak-count">0</span> day streak
-      </span>
+      <div class="home-right">
+        <div class="lang-chip">
+          <span class="lang-opt active" id="lang-en" onclick="setLang('en')">EN</span>
+          <span class="lang-opt" id="lang-es" onclick="setLang('es')">ES</span>
+        </div>
+        <span class="streak-chip" onclick="openProfile()">🔥 <span id="s-count">0</span></span>
+        <button class="avatar-btn" id="av-btn" onclick="openProfile()">?</button>
+      </div>
     </div>
-  </header>
 
-  <div class="nav-bar">
-    <select id="book-select" onchange="onBookChange()"></select>
-    <select id="chapter-select" onchange="onChapterChange()"></select>
-  </div>
-
-  <div class="chapter-nav">
-    <button class="chapter-nav-btn" id="prev-btn" onclick="prevChapter()">&#8592; Prev</button>
-    <span class="chapter-label" id="chapter-label"></span>
-    <button class="chapter-nav-btn" id="next-btn" onclick="nextChapter()">Next &#8594;</button>
-  </div>
-
-  <div class="bible-content" id="bible-content">
-    <div class="loading-text">Loading Scripture...</div>
-  </div>
-
-  <!-- Highlight toolbar -->
-  <div class="highlight-toolbar" id="highlight-toolbar">
-    <div class="color-dot" data-color="yellow" onclick="applyHighlight('yellow')" title="Yellow"></div>
-    <div class="color-dot" data-color="pink" onclick="applyHighlight('pink')" title="Pink"></div>
-    <div class="color-dot" data-color="blue" onclick="applyHighlight('blue')" title="Blue"></div>
-    <div class="color-dot" data-color="green" onclick="applyHighlight('green')" title="Green"></div>
-    <div class="color-dot" data-color="purple" onclick="applyHighlight('purple')" title="Purple"></div>
-    <button class="toolbar-remove" onclick="removeHighlight()" title="Remove">✕</button>
-  </div>
-
-  <!-- FaithAI -->
-  <div class="faithai-fab">
-    <button class="fab-btn" id="fab-btn" onclick="toggleFaithAI()" title="Ask FaithAI">✦</button>
-  </div>
-
-  <div class="faithai-panel" id="faithai-panel">
-    <div class="panel-header">
-      <span class="panel-header-title">FaithAI</span>
-      <button class="panel-close" onclick="toggleFaithAI()">✕</button>
+    <div class="bible-card" onclick="showBible()">
+      <div class="bc-left">
+        <span class="bc-tag" id="bc-tag">Scripture</span>
+        <span class="bc-name" id="bc-name">Open Bible</span>
+      </div>
+      <span class="bc-arrow">›</span>
     </div>
-    <div class="panel-messages" id="panel-messages">
-      <div class="msg ai">Ask me anything about Scripture or the Catholic faith.</div>
+
+    <div class="chat-feed" id="chat-feed">
+      <div class="brow ai">
+        <div class="ai-meta"><div class="ai-dot">f</div><span class="ai-tag">FaithAI</span></div>
+        <div class="bubble ai" id="welcome-bubble">Ask me anything about Scripture or the Catholic faith.</div>
+      </div>
     </div>
-    <div class="panel-input-row">
-      <textarea class="panel-input" id="panel-input" rows="1" placeholder="Ask about this passage..."></textarea>
-      <button class="panel-send" id="panel-send" onclick="sendFaithAI()">Send</button>
+
+    <div class="ibar">
+      <div class="iwrap">
+        <textarea class="ita" id="ita" rows="1" placeholder="What are you looking for?"></textarea>
+        <button class="sbtn" id="sbtn" onclick="sendMsg()">↑</button>
+      </div>
     </div>
   </div>
 
-  <!-- Streak Modal -->
-  <div class="modal-overlay" id="streak-modal" onclick="closeStreakModal(event)">
-    <div class="modal">
-      <div class="modal-title">🔥 Your Streak</div>
-      <div class="streak-grid" id="streak-grid"></div>
-      <p style="font-size:0.82rem;color:#888;margin-bottom:0.75rem">Highlight at least one verse each day to keep your streak alive.</p>
-      <button class="modal-close" onclick="closeStreakModalDirect()">Close</button>
+  <!-- BIBLE -->
+  <div class="scr off-r" id="bible">
+    <div class="btop">
+      <button class="back-btn" onclick="showHome()">‹ FaithAI</button>
+      <div class="bsels">
+        <select class="bsel" id="bk" onchange="onBook()"></select>
+        <select class="bsel" id="ch" onchange="onCh()"></select>
+      </div>
+    </div>
+    <div class="chnav">
+      <button class="chbtn" id="p-btn" onclick="prevCh()">← Prev</button>
+      <span class="chlbl" id="ch-lbl"></span>
+      <button class="chbtn" id="n-btn" onclick="nextCh()">Next →</button>
+    </div>
+    <div class="bscroll" id="bscroll"><div class="load-msg">Loading...</div></div>
+    <div class="hlbar" id="hlbar">
+      <div class="hldot" data-c="yellow" onclick="applyHL('yellow')"></div>
+      <div class="hldot" data-c="pink" onclick="applyHL('pink')"></div>
+      <div class="hldot" data-c="blue" onclick="applyHL('blue')"></div>
+      <div class="hldot" data-c="green" onclick="applyHL('green')"></div>
+      <div class="hldot" data-c="purple" onclick="applyHL('purple')"></div>
+      <button class="hlrm" onclick="rmHL()">✕</button>
+    </div>
+  </div>
+
+  <!-- PROFILE / STREAK SHEET -->
+  <div class="sheet-bg" id="profile-sheet" onclick="closeProfile(event)">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Profile</div>
+      <div class="profile-row">
+        <div class="profile-av" id="prof-av">?</div>
+        <div class="profile-info">
+          <div class="profile-name" id="prof-name">Guest</div>
+          <div class="profile-email" id="prof-email">Not signed in</div>
+        </div>
+      </div>
+      <div class="sheet-stat-row">
+        <div class="sheet-stat"><div class="sheet-stat-num" id="stat-streak">0</div><div class="sheet-stat-lbl">Day Streak</div></div>
+        <div class="sheet-stat"><div class="sheet-stat-num" id="stat-hl">0</div><div class="sheet-stat-lbl">Highlights</div></div>
+        <div class="sheet-stat"><div class="sheet-stat-num" id="stat-days">0</div><div class="sheet-stat-lbl">Days Read</div></div>
+      </div>
+      <div class="s-grid" id="s-grid"></div>
+      <p class="sheet-note">Highlight at least one verse each day to keep your streak alive.</p>
+      <button class="sheet-close" onclick="closeProfileDirect()">Done</button>
+      <button class="signout-btn" id="signout-btn" onclick="signOut()">Sign Out</button>
     </div>
   </div>
 
 </div>
-
 <script>
-// ─── BIBLE DATA ───────────────────────────────────────────────────────────────
-const BOOKS = [
-  // Old Testament
-  { id:1,  name: "Genesis", chapters: 50 },
-  { id:2,  name: "Exodus", chapters: 40 },
-  { id:3,  name: "Leviticus", chapters: 27 },
-  { id:4,  name: "Numbers", chapters: 36 },
-  { id:5,  name: "Deuteronomy", chapters: 34 },
-  { id:6,  name: "Joshua", chapters: 24 },
-  { id:7,  name: "Judges", chapters: 21 },
-  { id:8,  name: "Ruth", chapters: 4 },
-  { id:9,  name: "1 Samuel", chapters: 31 },
-  { id:10, name: "2 Samuel", chapters: 24 },
-  { id:11, name: "1 Kings", chapters: 22 },
-  { id:12, name: "2 Kings", chapters: 25 },
-  { id:13, name: "1 Chronicles", chapters: 29 },
-  { id:14, name: "2 Chronicles", chapters: 36 },
-  { id:15, name: "Ezra", chapters: 10 },
-  { id:16, name: "Nehemiah", chapters: 13 },
-  { id:17, name: "Esther", chapters: 10 },
-  { id:18, name: "Job", chapters: 42 },
-  { id:19, name: "Psalms", chapters: 150 },
-  { id:20, name: "Proverbs", chapters: 31 },
-  { id:21, name: "Ecclesiastes", chapters: 12 },
-  { id:22, name: "Song of Songs", chapters: 8 },
-  { id:23, name: "Isaiah", chapters: 66 },
-  { id:24, name: "Jeremiah", chapters: 52 },
-  { id:25, name: "Lamentations", chapters: 5 },
-  { id:26, name: "Ezekiel", chapters: 48 },
-  { id:27, name: "Daniel", chapters: 12 },
-  { id:28, name: "Hosea", chapters: 14 },
-  { id:29, name: "Joel", chapters: 3 },
-  { id:30, name: "Amos", chapters: 9 },
-  { id:31, name: "Obadiah", chapters: 1 },
-  { id:32, name: "Jonah", chapters: 4 },
-  { id:33, name: "Micah", chapters: 7 },
-  { id:34, name: "Nahum", chapters: 3 },
-  { id:35, name: "Habakkuk", chapters: 3 },
-  { id:36, name: "Zephaniah", chapters: 3 },
-  { id:37, name: "Haggai", chapters: 2 },
-  { id:38, name: "Zechariah", chapters: 14 },
-  { id:39, name: "Malachi", chapters: 4 },
-  // New Testament
-  { id:40, name: "Matthew", chapters: 28 },
-  { id:41, name: "Mark", chapters: 16 },
-  { id:42, name: "Luke", chapters: 24 },
-  { id:43, name: "John", chapters: 21 },
-  { id:44, name: "Acts", chapters: 28 },
-  { id:45, name: "Romans", chapters: 16 },
-  { id:46, name: "1 Corinthians", chapters: 16 },
-  { id:47, name: "2 Corinthians", chapters: 13 },
-  { id:48, name: "Galatians", chapters: 6 },
-  { id:49, name: "Ephesians", chapters: 6 },
-  { id:50, name: "Philippians", chapters: 4 },
-  { id:51, name: "Colossians", chapters: 4 },
-  { id:52, name: "1 Thessalonians", chapters: 5 },
-  { id:53, name: "2 Thessalonians", chapters: 3 },
-  { id:54, name: "1 Timothy", chapters: 6 },
-  { id:55, name: "2 Timothy", chapters: 4 },
-  { id:56, name: "Titus", chapters: 3 },
-  { id:57, name: "Philemon", chapters: 1 },
-  { id:58, name: "Hebrews", chapters: 13 },
-  { id:59, name: "James", chapters: 5 },
-  { id:60, name: "1 Peter", chapters: 5 },
-  { id:61, name: "2 Peter", chapters: 3 },
-  { id:62, name: "1 John", chapters: 5 },
-  { id:63, name: "2 John", chapters: 1 },
-  { id:64, name: "3 John", chapters: 1 },
-  { id:65, name: "Jude", chapters: 1 },
-  { id:66, name: "Revelation", chapters: 22 },
-];
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
+const SB = supabase.createClient(
+  'https://qnduwwjxlomzplfyyrvp.supabase.co',
+  'sb_publishable_ZXTizeQF42ldVMDwWA-rIg_o_Hj1-VA'
+);
+const RAIL = 'https://catholic-bible-app-production.up.railway.app';
 
-// ─── STATE ────────────────────────────────────────────────────────────────────
-let currentBookIdx = 39; // Matthew
-let currentChapter = 1;
-let selectedVerseEl = null;
-let highlights = JSON.parse(localStorage.getItem('faithai_highlights') || '{}');
-let streakData = JSON.parse(localStorage.getItem('faithai_streak') || '{"dates":[],"lastHighlight":null}');
+// ── BOOKS ─────────────────────────────────────────────────────────────────────
+const BOOKS = {
+  en:[
+    {id:1,n:"Genesis",c:50},{id:2,n:"Exodus",c:40},{id:3,n:"Leviticus",c:27},
+    {id:4,n:"Numbers",c:36},{id:5,n:"Deuteronomy",c:34},{id:6,n:"Joshua",c:24},
+    {id:7,n:"Judges",c:21},{id:8,n:"Ruth",c:4},{id:9,n:"1 Samuel",c:31},
+    {id:10,n:"2 Samuel",c:24},{id:11,n:"1 Kings",c:22},{id:12,n:"2 Kings",c:25},
+    {id:13,n:"1 Chronicles",c:29},{id:14,n:"2 Chronicles",c:36},{id:15,n:"Ezra",c:10},
+    {id:16,n:"Nehemiah",c:13},{id:17,n:"Esther",c:10},{id:18,n:"Job",c:42},
+    {id:19,n:"Psalms",c:150},{id:20,n:"Proverbs",c:31},{id:21,n:"Ecclesiastes",c:12},
+    {id:22,n:"Song of Songs",c:8},{id:23,n:"Isaiah",c:66},{id:24,n:"Jeremiah",c:52},
+    {id:25,n:"Lamentations",c:5},{id:26,n:"Ezekiel",c:48},{id:27,n:"Daniel",c:12},
+    {id:28,n:"Hosea",c:14},{id:29,n:"Joel",c:3},{id:30,n:"Amos",c:9},
+    {id:31,n:"Obadiah",c:1},{id:32,n:"Jonah",c:4},{id:33,n:"Micah",c:7},
+    {id:34,n:"Nahum",c:3},{id:35,n:"Habakkuk",c:3},{id:36,n:"Zephaniah",c:3},
+    {id:37,n:"Haggai",c:2},{id:38,n:"Zechariah",c:14},{id:39,n:"Malachi",c:4},
+    {id:40,n:"Matthew",c:28},{id:41,n:"Mark",c:16},{id:42,n:"Luke",c:24},
+    {id:43,n:"John",c:21},{id:44,n:"Acts",c:28},{id:45,n:"Romans",c:16},
+    {id:46,n:"1 Corinthians",c:16},{id:47,n:"2 Corinthians",c:13},{id:48,n:"Galatians",c:6},
+    {id:49,n:"Ephesians",c:6},{id:50,n:"Philippians",c:4},{id:51,n:"Colossians",c:4},
+    {id:52,n:"1 Thessalonians",c:5},{id:53,n:"2 Thessalonians",c:3},{id:54,n:"1 Timothy",c:6},
+    {id:55,n:"2 Timothy",c:4},{id:56,n:"Titus",c:3},{id:57,n:"Philemon",c:1},
+    {id:58,n:"Hebrews",c:13},{id:59,n:"James",c:5},{id:60,n:"1 Peter",c:5},
+    {id:61,n:"2 Peter",c:3},{id:62,n:"1 John",c:5},{id:63,n:"2 John",c:1},
+    {id:64,n:"3 John",c:1},{id:65,n:"Jude",c:1},{id:66,n:"Revelation",c:22},
+  ],
+  es:[
+    {id:1,n:"Génesis",c:50},{id:2,n:"Éxodo",c:40},{id:3,n:"Levítico",c:27},
+    {id:4,n:"Números",c:36},{id:5,n:"Deuteronomio",c:34},{id:6,n:"Josué",c:24},
+    {id:7,n:"Jueces",c:21},{id:8,n:"Rut",c:4},{id:9,n:"1 Samuel",c:31},
+    {id:10,n:"2 Samuel",c:24},{id:11,n:"1 Reyes",c:22},{id:12,n:"2 Reyes",c:25},
+    {id:13,n:"1 Crónicas",c:29},{id:14,n:"2 Crónicas",c:36},{id:15,n:"Esdras",c:10},
+    {id:16,n:"Nehemías",c:13},{id:17,n:"Ester",c:10},{id:18,n:"Job",c:42},
+    {id:19,n:"Salmos",c:150},{id:20,n:"Proverbios",c:31},{id:21,n:"Eclesiastés",c:12},
+    {id:22,n:"Cantar de los Cantares",c:8},{id:23,n:"Isaías",c:66},{id:24,n:"Jeremías",c:52},
+    {id:25,n:"Lamentaciones",c:5},{id:26,n:"Ezequiel",c:48},{id:27,n:"Daniel",c:12},
+    {id:28,n:"Oseas",c:14},{id:29,n:"Joel",c:3},{id:30,n:"Amós",c:9},
+    {id:31,n:"Abdías",c:1},{id:32,n:"Jonás",c:4},{id:33,n:"Miqueas",c:7},
+    {id:34,n:"Nahúm",c:3},{id:35,n:"Habacuc",c:3},{id:36,n:"Sofonías",c:3},
+    {id:37,n:"Hageo",c:2},{id:38,n:"Zacarías",c:14},{id:39,n:"Malaquías",c:4},
+    {id:40,n:"Mateo",c:28},{id:41,n:"Marcos",c:16},{id:42,n:"Lucas",c:24},
+    {id:43,n:"Juan",c:21},{id:44,n:"Hechos",c:28},{id:45,n:"Romanos",c:16},
+    {id:46,n:"1 Corintios",c:16},{id:47,n:"2 Corintios",c:13},{id:48,n:"Gálatas",c:6},
+    {id:49,n:"Efesios",c:6},{id:50,n:"Filipenses",c:4},{id:51,n:"Colosenses",c:4},
+    {id:52,n:"1 Tesalonicenses",c:5},{id:53,n:"2 Tesalonicenses",c:3},{id:54,n:"1 Timoteo",c:6},
+    {id:55,n:"2 Timoteo",c:4},{id:56,n:"Tito",c:3},{id:57,n:"Filemón",c:1},
+    {id:58,n:"Hebreos",c:13},{id:59,n:"Santiago",c:5},{id:60,n:"1 Pedro",c:5},
+    {id:61,n:"2 Pedro",c:3},{id:62,n:"1 Juan",c:5},{id:63,n:"2 Juan",c:1},
+    {id:64,n:"3 Juan",c:1},{id:65,n:"Judas",c:1},{id:66,n:"Apocalipsis",c:22},
+  ]
+};
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-function init() {
-  populateBookSelect();
-  updateChapterSelect();
-  loadChapter();
-  updateStreakBadge();
-}
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let lang='en', bi=39, ch=1, selV=null;
+let HL={}, SK={d:[]};
+let user=null;
+let authMode='signin'; // 'signin' | 'signup'
 
-function populateBookSelect() {
-  const sel = document.getElementById('book-select');
-  BOOKS.forEach((b, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = b.name;
-    if (i === currentBookIdx) opt.selected = true;
-    sel.appendChild(opt);
-  });
-}
-
-function updateChapterSelect() {
-  const sel = document.getElementById('chapter-select');
-  sel.innerHTML = '';
-  const book = BOOKS[currentBookIdx];
-  for (let c = 1; c <= book.chapters; c++) {
-    const opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = `Chapter ${c}`;
-    if (c === currentChapter) opt.selected = true;
-    sel.appendChild(opt);
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+async function initAuth() {
+  const {data:{session}} = await SB.auth.getSession();
+  if (session) {
+    user = session.user;
+    await loadUserData();
+    goHome();
+  } else {
+    show('auth');
   }
-}
 
-function onBookChange() {
-  currentBookIdx = parseInt(document.getElementById('book-select').value);
-  currentChapter = 1;
-  updateChapterSelect();
-  loadChapter();
-}
-
-function onChapterChange() {
-  currentChapter = parseInt(document.getElementById('chapter-select').value);
-  loadChapter();
-}
-
-function prevChapter() {
-  if (currentChapter > 1) {
-    currentChapter--;
-  } else if (currentBookIdx > 0) {
-    currentBookIdx--;
-    document.getElementById('book-select').value = currentBookIdx;
-    currentChapter = BOOKS[currentBookIdx].chapters;
-  }
-  updateChapterSelect();
-  loadChapter();
-}
-
-function nextChapter() {
-  if (currentChapter < BOOKS[currentBookIdx].chapters) {
-    currentChapter++;
-  } else if (currentBookIdx < BOOKS.length - 1) {
-    currentBookIdx++;
-    document.getElementById('book-select').value = currentBookIdx;
-    currentChapter = 1;
-  }
-  updateChapterSelect();
-  loadChapter();
-}
-
-function updateNavButtons() {
-  const book = BOOKS[currentBookIdx];
-  document.getElementById('prev-btn').disabled = (currentBookIdx === 0 && currentChapter === 1);
-  document.getElementById('next-btn').disabled = (currentBookIdx === BOOKS.length - 1 && currentChapter === book.chapters);
-  document.getElementById('chapter-label').textContent = `${book.name} ${currentChapter}`;
-}
-
-// ─── FETCH BIBLE TEXT ─────────────────────────────────────────────────────────
-// rkeplin API: free, no key, uses numeric book IDs 1-73 (includes deuterocanonicals)
-// Book IDs follow canonical order. We use WEB translation via query param.
-async function loadChapter() {
-  hideHighlightToolbar();
-  selectedVerseEl = null;
-  updateNavButtons();
-
-  const content = document.getElementById('bible-content');
-  content.innerHTML = '<div class="loading-text">Loading Scripture...</div>';
-
-  const book = BOOKS[currentBookIdx];
-  const bookId = book.id;
-
-  try {
-    const url = `https://catholic-bible-app-production.up.railway.app/bible/${bookId}/${currentChapter}`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error('fetch failed');
-    const verses = await resp.json();
-    if (!Array.isArray(verses) || verses.length === 0) throw new Error('no verses');
-    renderChapter(verses, book.name, currentChapter);
-  } catch (e) {
-    content.innerHTML = `<div class="loading-text">Could not load this chapter. Check your connection.</div>`;
-  }
-}
-
-function renderChapter(verses, bookName, chapter) {
-  const content = document.getElementById('bible-content');
-  const key = `${currentBookIdx}_${currentChapter}`;
-  const chapterHighlights = highlights[key] || {};
-
-  let html = `<div class="bible-text"><div class="chapter-title">${bookName} ${chapter}</div>`;
-
-  verses.forEach(v => {
-    const vnum = v.verseId;
-    const text = (v.verse || '').trim();
-    const color = chapterHighlights[vnum] || '';
-    html += `<span class="verse" data-verse="${vnum}" ${color ? `data-highlight="${color}"` : ''} onclick="selectVerse(this)"><sup class="verse-num">${vnum}</sup>${text} </span>`;
-  });
-
-  html += '</div>';
-  content.innerHTML = html;
-}
-
-// ─── VERSE SELECTION ──────────────────────────────────────────────────────────
-function selectVerse(el) {
-  if (selectedVerseEl && selectedVerseEl !== el) {
-    selectedVerseEl.classList.remove('selected');
-  }
-  if (selectedVerseEl === el) {
-    el.classList.remove('selected');
-    selectedVerseEl = null;
-    hideHighlightToolbar();
-    return;
-  }
-  el.classList.add('selected');
-  selectedVerseEl = el;
-  showHighlightToolbar();
-}
-
-function showHighlightToolbar() {
-  document.getElementById('highlight-toolbar').classList.add('visible');
-}
-
-function hideHighlightToolbar() {
-  document.getElementById('highlight-toolbar').classList.remove('visible');
-}
-
-function applyHighlight(color) {
-  if (!selectedVerseEl) return;
-  const vnum = selectedVerseEl.getAttribute('data-verse');
-  const key = `${currentBookIdx}_${currentChapter}`;
-  if (!highlights[key]) highlights[key] = {};
-  highlights[key][vnum] = color;
-  selectedVerseEl.setAttribute('data-highlight', color);
-  selectedVerseEl.classList.remove('selected');
-  selectedVerseEl = null;
-  hideHighlightToolbar();
-  saveHighlights();
-  markStreakToday();
-}
-
-function removeHighlight() {
-  if (!selectedVerseEl) return;
-  const vnum = selectedVerseEl.getAttribute('data-verse');
-  const key = `${currentBookIdx}_${currentChapter}`;
-  if (highlights[key]) delete highlights[key][vnum];
-  selectedVerseEl.removeAttribute('data-highlight');
-  selectedVerseEl.classList.remove('selected');
-  selectedVerseEl = null;
-  hideHighlightToolbar();
-  saveHighlights();
-}
-
-function saveHighlights() {
-  localStorage.setItem('faithai_highlights', JSON.stringify(highlights));
-}
-
-// Close toolbar on outside click
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.verse') && !e.target.closest('#highlight-toolbar')) {
-    if (selectedVerseEl) selectedVerseEl.classList.remove('selected');
-    selectedVerseEl = null;
-    hideHighlightToolbar();
-  }
-});
-
-// ─── STREAK ───────────────────────────────────────────────────────────────────
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function markStreakToday() {
-  const today = todayStr();
-  if (!streakData.dates.includes(today)) {
-    streakData.dates.push(today);
-  }
-  streakData.lastHighlight = today;
-  localStorage.setItem('faithai_streak', JSON.stringify(streakData));
-  updateStreakBadge();
-}
-
-function getStreakCount() {
-  const dates = [...new Set(streakData.dates)].sort();
-  if (dates.length === 0) return 0;
-  let streak = 0;
-  let check = new Date();
-  for (let i = 0; i < 365; i++) {
-    const d = check.toISOString().slice(0, 10);
-    if (dates.includes(d)) {
-      streak++;
-      check.setDate(check.getDate() - 1);
-    } else if (i === 0) {
-      check.setDate(check.getDate() - 1);
-      const yesterday = check.toISOString().slice(0, 10);
-      if (!dates.includes(yesterday)) break;
-    } else {
-      break;
+  SB.auth.onAuthStateChange(async (_,session) => {
+    if (session) {
+      user = session.user;
+      await loadUserData();
+      goHome();
     }
-  }
-  return streak;
+  });
 }
 
-function updateStreakBadge() {
-  document.getElementById('streak-count').textContent = getStreakCount();
+function authToggle() {
+  authMode = authMode === 'signin' ? 'signup' : 'signin';
+  document.getElementById('auth-title').textContent = authMode === 'signin' ? 'Sign In' : 'Create Account';
+  document.getElementById('a-main-btn').textContent = authMode === 'signin' ? 'Sign In' : 'Create Account';
+  document.getElementById('a-err').textContent = '';
 }
 
-function openStreakModal() {
-  const grid = document.getElementById('streak-grid');
-  grid.innerHTML = '';
-  const today = todayStr();
-  for (let i = 27; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const ds = d.toISOString().slice(0, 10);
-    const done = streakData.dates.includes(ds);
-    const isToday = ds === today;
-    const day = document.createElement('div');
-    day.className = `streak-day${done ? ' done' : ''}${isToday ? ' today' : ''}`;
-    day.textContent = d.getDate();
-    grid.appendChild(day);
-  }
-  document.getElementById('streak-modal').classList.add('open');
-}
-
-function closeStreakModal(e) {
-  if (e.target === document.getElementById('streak-modal')) {
-    document.getElementById('streak-modal').classList.remove('open');
-  }
-}
-
-function closeStreakModalDirect() {
-  document.getElementById('streak-modal').classList.remove('open');
-}
-
-// ─── FAITHAI ──────────────────────────────────────────────────────────────────
-function toggleFaithAI() {
-  const panel = document.getElementById('faithai-panel');
-  const btn = document.getElementById('fab-btn');
-  const open = panel.classList.toggle('open');
-  btn.classList.toggle('open', open);
-  if (open) {
-    setTimeout(() => document.getElementById('panel-input').focus(), 200);
-  }
-}
-
-async function sendFaithAI() {
-  const input = document.getElementById('panel-input');
-  const q = input.value.trim();
-  if (!q) return;
-
-  const messages = document.getElementById('panel-messages');
-  const send = document.getElementById('panel-send');
-
-  // Add user message
-  const userMsg = document.createElement('div');
-  userMsg.className = 'msg user';
-  userMsg.textContent = q;
-  messages.appendChild(userMsg);
-  input.value = '';
-
-  // Thinking
-  const thinking = document.createElement('div');
-  thinking.className = 'msg ai thinking';
-  thinking.textContent = 'Thinking...';
-  messages.appendChild(thinking);
-  messages.scrollTop = messages.scrollHeight;
-  send.disabled = true;
-
-  const book = BOOKS[currentBookIdx];
-  const context = `Current passage: ${book.name} ${currentChapter} (NABRE). `;
-
+async function authMain() {
+  const email = document.getElementById('a-email').value.trim();
+  const pass = document.getElementById('a-pass').value;
+  const err = document.getElementById('a-err');
+  const btn = document.getElementById('a-main-btn');
+  if (!email || !pass) { err.textContent = 'Enter email and password.'; return; }
+  btn.disabled = true; err.textContent = '';
   try {
-    const resp = await fetch('https://catholic-bible-app-production.up.railway.app/ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: context + q })
-    });
-    const data = await resp.json();
-    thinking.classList.remove('thinking');
-    thinking.textContent = data.answer || 'No response.';
-  } catch (e) {
-    thinking.classList.remove('thinking');
-    thinking.textContent = 'Could not reach FaithAI. Check your connection.';
-  } finally {
-    send.disabled = false;
-    messages.scrollTop = messages.scrollHeight;
+    let res;
+    if (authMode === 'signup') {
+      res = await SB.auth.signUp({email, password:pass});
+      if (res.error) throw res.error;
+      err.style.color = '#30D158';
+      err.textContent = 'Check your email to confirm your account.';
+    } else {
+      res = await SB.auth.signInWithPassword({email, password:pass});
+      if (res.error) throw res.error;
+    }
+  } catch(e) {
+    err.style.color = '#FF375F';
+    err.textContent = e.message || 'Something went wrong.';
+  } finally { btn.disabled = false; }
+}
+
+async function signInGoogle() {
+  await SB.auth.signInWithOAuth({
+    provider:'google',
+    options:{ redirectTo: window.location.href }
+  });
+}
+
+function skipAuth() {
+  user = null;
+  HL = JSON.parse(localStorage.getItem('fa_hl')||'{}');
+  SK = JSON.parse(localStorage.getItem('fa_sk')||'{"d":[]}');
+  goHome();
+}
+
+async function signOut() {
+  await SB.auth.signOut();
+  user = null;
+  HL = {}; SK = {d:[]};
+  closeProfileDirect();
+  show('auth');
+  document.getElementById('home').classList.add('off-r');
+}
+
+// ── USER DATA (SUPABASE) ───────────────────────────────────────────────────────
+async function loadUserData() {
+  if (!user) return;
+  try {
+    const {data:hlData} = await SB.from('highlights').select('data').eq('user_id', user.id).single();
+    if (hlData) HL = hlData.data || {};
+    const {data:skData} = await SB.from('streaks').select('dates').eq('user_id', user.id).single();
+    if (skData) SK = {d: skData.dates || []};
+  } catch {}
+}
+
+async function saveHL() {
+  if (user) {
+    await SB.from('highlights').upsert({user_id:user.id, data:HL}, {onConflict:'user_id'});
+  } else {
+    localStorage.setItem('fa_hl', JSON.stringify(HL));
   }
 }
 
-document.getElementById('panel-input').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFaithAI(); }
+async function saveSK() {
+  if (user) {
+    await SB.from('streaks').upsert({user_id:user.id, dates:SK.d}, {onConflict:'user_id'});
+  } else {
+    localStorage.setItem('fa_sk', JSON.stringify(SK));
+  }
+}
+
+// ── SCREEN NAV ────────────────────────────────────────────────────────────────
+function show(id) {
+  ['auth','home','bible'].forEach(s => {
+    const el = document.getElementById(s);
+    el.classList.remove('off-l','off-r');
+    if (s !== id) el.classList.add('off-r');
+  });
+}
+
+function goHome() {
+  document.getElementById('auth').classList.add('off-r');
+  document.getElementById('bible').classList.add('off-r');
+  document.getElementById('home').classList.remove('off-r','off-l');
+  updateCard();
+  updateStreakBadge();
+  updateAvatar();
+}
+
+function showBible() {
+  document.getElementById('home').classList.add('off-l');
+  document.getElementById('bible').classList.remove('off-r');
+  loadCh();
+}
+
+function showHome() {
+  document.getElementById('bible').classList.add('off-r');
+  document.getElementById('home').classList.remove('off-l','off-r');
+  updateCard();
+}
+
+// ── LANGUAGE ──────────────────────────────────────────────────────────────────
+function setLang(l) {
+  lang = l;
+  document.getElementById('lang-en').classList.toggle('active', l==='en');
+  document.getElementById('lang-es').classList.toggle('active', l==='es');
+  document.getElementById('welcome-bubble').textContent = l === 'en'
+    ? 'Ask me anything about Scripture or the Catholic faith.'
+    : 'Pregúntame cualquier cosa sobre las Escrituras o la fe católica.';
+  document.getElementById('ita').placeholder = l === 'en' ? 'What are you looking for?' : '¿Qué estás buscando?';
+  document.getElementById('bc-tag').textContent = l === 'en' ? 'Scripture' : 'Escritura';
+  rebuildBookSel();
+  loadCh();
+}
+
+// ── AVATAR ────────────────────────────────────────────────────────────────────
+function updateAvatar() {
+  const btn = document.getElementById('av-btn');
+  if (user) {
+    const av = user.user_metadata?.avatar_url;
+    const name = user.user_metadata?.full_name || user.email || '?';
+    if (av) {
+      btn.innerHTML = `<img src="${av}" alt="avatar"/>`;
+    } else {
+      btn.textContent = name[0].toUpperCase();
+    }
+  } else {
+    btn.textContent = '?';
+  }
+}
+
+// ── BIBLE ─────────────────────────────────────────────────────────────────────
+function books() { return BOOKS[lang]; }
+
+function rebuildBookSel() {
+  const sel = document.getElementById('bk');
+  const cur = parseInt(sel.value) || bi;
+  sel.innerHTML = '';
+  books().forEach((b,i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = b.n;
+    if (i === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+  bi = parseInt(document.getElementById('bk').value) || 0;
+}
+
+function buildChSel() {
+  const sel = document.getElementById('ch');
+  sel.innerHTML = '';
+  for (let c=1; c<=books()[bi].c; c++) {
+    const o = document.createElement('option');
+    o.value = c;
+    o.textContent = `${lang==='en'?'Ch.':'Cap.'} ${c}`;
+    if (c===ch) o.selected = true;
+    sel.appendChild(o);
+  }
+}
+
+function updateCard() {
+  const b = books()[bi];
+  document.getElementById('bc-name').textContent = `${b.n} ${ch}`;
+}
+
+function updNav() {
+  document.getElementById('p-btn').disabled = (bi===0 && ch===1);
+  document.getElementById('n-btn').disabled = (bi===books().length-1 && ch===books()[bi].c);
+  document.getElementById('ch-lbl').textContent = `${books()[bi].n} ${ch}`;
+}
+
+function onBook() { bi=parseInt(document.getElementById('bk').value); ch=1; buildChSel(); loadCh(); }
+function onCh() { ch=parseInt(document.getElementById('ch').value); loadCh(); }
+
+function prevCh() {
+  if(ch>1) ch--;
+  else if(bi>0){bi--;document.getElementById('bk').value=bi;ch=books()[bi].c;}
+  buildChSel(); loadCh();
+}
+
+function nextCh() {
+  if(ch<books()[bi].c) ch++;
+  else if(bi<books().length-1){bi++;document.getElementById('bk').value=bi;ch=1;}
+  buildChSel(); loadCh();
+}
+
+async function loadCh() {
+  hideHL(); selV=null; updNav(); updateCard();
+  const body = document.getElementById('bscroll');
+  body.innerHTML = `<div class="load-msg">${lang==='en'?'Loading...':'Cargando...'}</div>`;
+  try {
+    const translation = lang==='en' ? 'WEB' : 'RVR1960';
+    const bookId = books()[bi].id;
+    const r = await fetch(`${RAIL}/bible/${bookId}/${ch}?translation=${translation}`);
+    if(!r.ok) throw 0;
+    const vs = await r.json();
+    if(!Array.isArray(vs)||!vs.length) throw 0;
+    const key=`${bi}_${ch}_${lang}`, hlmap=HL[key]||{};
+    let html=`<div class="btext"><div class="chtitle">${books()[bi].n} ${ch}</div>`;
+    vs.forEach(v=>{
+      const n=v.verseId, t=(v.verse||'').trim(), c2=hlmap[n]||'';
+      html+=`<span class="verse" data-v="${n}" ${c2?`data-hl="${c2}"`:''}  onclick="tapV(this)"><sup class="vnum">${n}</sup>${t} </span>`;
+    });
+    html+='</div>';
+    body.innerHTML=html; body.scrollTop=0;
+  } catch {
+    body.innerHTML=`<div class="load-msg">${lang==='en'?'Could not load. Check connection.':'No se pudo cargar. Revisa tu conexión.'}</div>`;
+  }
+}
+
+// ── VERSE / HIGHLIGHT ─────────────────────────────────────────────────────────
+function tapV(el) {
+  if(selV&&selV!==el) selV.classList.remove('sel');
+  if(selV===el){el.classList.remove('sel');selV=null;hideHL();return;}
+  el.classList.add('sel'); selV=el; showHL();
+}
+function showHL(){document.getElementById('hlbar').classList.add('on');}
+function hideHL(){document.getElementById('hlbar').classList.remove('on');}
+
+function applyHL(color) {
+  if(!selV) return;
+  const n=selV.getAttribute('data-v');
+  const key=`${bi}_${ch}_${lang}`;
+  if(!HL[key]) HL[key]={};
+  HL[key][n]=color;
+  selV.setAttribute('data-hl',color);
+  selV.classList.remove('sel'); selV=null; hideHL();
+  saveHL(); markStreak();
+}
+
+function rmHL() {
+  if(!selV) return;
+  const n=selV.getAttribute('data-v');
+  const key=`${bi}_${ch}_${lang}`;
+  if(HL[key]) delete HL[key][n];
+  selV.removeAttribute('data-hl');
+  selV.classList.remove('sel'); selV=null; hideHL();
+  saveHL();
+}
+
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.verse')&&!e.target.closest('#hlbar')){
+    if(selV) selV.classList.remove('sel');
+    selV=null; hideHL();
+  }
 });
 
-// ─── START ────────────────────────────────────────────────────────────────────
-init();
+// ── STREAK ────────────────────────────────────────────────────────────────────
+function today(){return new Date().toISOString().slice(0,10);}
+
+function markStreak() {
+  const d=today();
+  if(!SK.d.includes(d)) SK.d.push(d);
+  saveSK(); updateStreakBadge();
+}
+
+function getStreak() {
+  const dates=[...new Set(SK.d)].sort();
+  if(!dates.length) return 0;
+  let count=0; const d=new Date();
+  for(let i=0;i<365;i++){
+    const ds=d.toISOString().slice(0,10);
+    if(dates.includes(ds)){count++;d.setDate(d.getDate()-1);}
+    else if(i===0){d.setDate(d.getDate()-1);if(!dates.includes(d.toISOString().slice(0,10)))break;}
+    else break;
+  }
+  return count;
+}
+
+function updateStreakBadge(){document.getElementById('s-count').textContent=getStreak();}
+
+function countHighlights() {
+  let n=0;
+  Object.values(HL).forEach(ch=>{ n+=Object.keys(ch).length; });
+  return n;
+}
+
+// ── PROFILE SHEET ─────────────────────────────────────────────────────────────
+function openProfile() {
+  const sheet = document.getElementById('profile-sheet');
+  // Update profile info
+  if(user){
+    const name=user.user_metadata?.full_name||user.email||'User';
+    const email=user.email||'';
+    const av=user.user_metadata?.avatar_url;
+    document.getElementById('prof-name').textContent=name;
+    document.getElementById('prof-email').textContent=email;
+    const avEl=document.getElementById('prof-av');
+    avEl.innerHTML=av?`<img src="${av}" alt="avatar"/>`:(name[0]||'?').toUpperCase();
+    document.getElementById('signout-btn').style.display='block';
+  } else {
+    document.getElementById('prof-name').textContent='Guest';
+    document.getElementById('prof-email').textContent='Not signed in';
+    document.getElementById('prof-av').textContent='?';
+    document.getElementById('signout-btn').style.display='none';
+  }
+  document.getElementById('stat-streak').textContent=getStreak();
+  document.getElementById('stat-hl').textContent=countHighlights();
+  document.getElementById('stat-days').textContent=[...new Set(SK.d)].length;
+
+  // Build calendar
+  const grid=document.getElementById('s-grid');
+  grid.innerHTML='';
+  const t=today();
+  for(let i=27;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const ds=d.toISOString().slice(0,10);
+    const el=document.createElement('div');
+    el.className=`s-day${SK.d.includes(ds)?' done':''}${ds===t?' today':''}`;
+    el.textContent=d.getDate();
+    grid.appendChild(el);
+  }
+  sheet.classList.add('on');
+}
+
+function closeProfile(e){if(e.target===document.getElementById('profile-sheet'))document.getElementById('profile-sheet').classList.remove('on');}
+function closeProfileDirect(){document.getElementById('profile-sheet').classList.remove('on');}
+
+// ── CHAT ──────────────────────────────────────────────────────────────────────
+function addBubble(text,role,thinking){
+  const feed=document.getElementById('chat-feed');
+  const row=document.createElement('div');
+  row.className=`brow ${role}`;
+  if(role==='ai'){
+    const meta=document.createElement('div');
+    meta.className='ai-meta';
+    meta.innerHTML=`<div class="ai-dot">f</div><span class="ai-tag">FaithAI</span>`;
+    row.appendChild(meta);
+  }
+  const bub=document.createElement('div');
+  bub.className=`bubble ${role}${thinking?' thinking':''}`;
+  bub.textContent=text;
+  row.appendChild(bub);
+  feed.appendChild(row);
+  feed.scrollTop=feed.scrollHeight;
+  return {row,bub};
+}
+
+async function sendMsg(){
+  const ta=document.getElementById('ita');
+  const q=ta.value.trim();
+  if(!q) return;
+  const btn=document.getElementById('sbtn');
+  addBubble(q,'me',false);
+  ta.value=''; ta.style.height='auto'; btn.disabled=true;
+  const {bub,row}=addBubble(lang==='en'?'Thinking...':'Pensando...','ai',true);
+  const b=books()[bi];
+  const langInstr=lang==='es'?'Responde siempre en español.':'';
+  const ctx=`Current passage: ${b.n} ${ch}. ${langInstr} `;
+  try {
+    const r=await fetch(`${RAIL}/ai`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:ctx+q})});
+    const data=await r.json();
+    bub.textContent=data.answer||'No response.';
+    bub.classList.remove('thinking');
+    const btns=document.createElement('div');
+    btns.className='bbtn-row';
+    btns.innerHTML=`<button class="bbtn" onclick="copyBub(this)">⎘ ${lang==='en'?'Copy':'Copiar'}</button><button class="bbtn" onclick="shareBub(this)">↗ ${lang==='en'?'Share':'Compartir'}</button>`;
+    row.appendChild(btns);
+  } catch {
+    bub.textContent=lang==='en'?'Could not reach FaithAI.':'No se pudo conectar con FaithAI.';
+  } finally {
+    btn.disabled=false;
+    document.getElementById('chat-feed').scrollTop=9999;
+  }
+}
+
+function copyBub(b){navigator.clipboard.writeText(b.closest('.brow').querySelector('.bubble').textContent).catch(()=>{});}
+function shareBub(b){const t=b.closest('.brow').querySelector('.bubble').textContent;if(navigator.share)navigator.share({text:t});}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(function(){
+  // Build book select
+  const bk=document.getElementById('bk');
+  books().forEach((b,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=b.n; if(i===bi)o.selected=true; bk.appendChild(o); });
+  buildChSel();
+
+  // Input auto resize
+  const ta=document.getElementById('ita');
+  ta.addEventListener('input',()=>{ ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,110)+'px'; });
+  ta.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} });
+
+  // Update server Bible proxy to support translation param
+  initAuth();
+})();
 </script>
 </body>
 </html>
