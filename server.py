@@ -47,6 +47,19 @@ def ai():
         print("ERROR:", e)
         return jsonify({"error": "AI request failed"}), 500
 
-
+@app.route("/bible/<int:book_id>/<int:chapter_id>", methods=["GET"])
+def bible(book_id, chapter_id):
+    try:
+        resp = requests.get(
+            f"https://bible-go-api.rkeplin.com/v1/books/{book_id}/chapters/{chapter_id}",
+            params={"translation": "WEB"},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        return jsonify(resp.json())
+    except Exception as e:
+        print("BIBLE ERROR:", e)
+        return jsonify({"error": "Could not fetch chapter"}), 500
+    
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8000, debug=True)
