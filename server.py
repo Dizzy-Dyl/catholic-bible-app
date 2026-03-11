@@ -53,9 +53,7 @@ def bible(book_id, chapter_id):
     try:
         translation = request.args.get("translation", "WEB")
         if translation == "RVR1960":
-            book_names = ["Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth","1+Samuel","2+Samuel","1+Kings","2+Kings","1+Chronicles","2+Chronicles","Ezra","Nehemiah","Esther","Job","Psalms","Proverbs","Ecclesiastes","Song+of+Solomon","Isaiah","Jeremiah","Lamentations","Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah","Haggai","Zechariah","Malachi","Matthew","Mark","Luke","John","Acts","Romans","1+Corinthians","2+Corinthians","Galatians","Ephesians","Philippians","Colossians","1+Thessalonians","2+Thessalonians","1+Timothy","2+Timothy","Titus","Philemon","Hebrews","James","1+Peter","2+Peter","1+John","2+John","3+John","Jude","Revelation"]
-            book = book_names[book_id - 1]
-            url = f"https://bible-api.com/{book}+{chapter_id}?translation=spa"
+            url = f"https://api.getbible.net/v2/rvr60/{book_id}/{chapter_id}.json"
             resp = requests.get(url, timeout=15)
             resp.raise_for_status()
             data = resp.json()
