@@ -53,7 +53,7 @@ def bible(book_id, chapter_id):
     try:
         translation = request.args.get("translation", "WEB")
         if translation == "RVR1960":
-            url = f"https://api.getbible.net/v2/rvr60/{book_id}/{chapter_id}.json"
+            url = f"https://api.getbible.net/v2/valera/{book_id}/{chapter_id}.json"
             resp = requests.get(url, timeout=15)
             resp.raise_for_status()
             data = resp.json()
